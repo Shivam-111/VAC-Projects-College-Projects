@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather Intelligence Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css?v=1.2" />
+  <!-- <link rel="stylesheet" href="css/responsive.css" /> -->
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo">
+      <span class="logo-icon">🌦️</span>
+      <span class="logo-text">Weather Intelligence Dashboard</span>
+    </div>
+
+    <div class="search-box">
+      <select id="citySelect" aria-label="Choose a city">
+        <option value="Nagpur">Nagpur</option>
+        <option value="Mumbai">Mumbai</option>
+        <option value="New Delhi">New Delhi</option>
+        <option value="Bengaluru">Bengaluru</option>
+        <option value="Chennai">Chennai</option>
+      </select>
+      <input
+        type="text"
+        id="cityInput"
+        placeholder="Or type a city"
+        aria-label="Enter city name"
+      />
+      <button id="searchBtn">Search</button>
+    </div>
+    <button class="auth-btn" id="registerBtn" onclick="(function(){const m=document.getElementById('registerModal'); if(m){m.hidden=false; m.setAttribute('aria-hidden','false'); const f=document.getElementById('regName'); if(f) f.focus();}})();">Register</button>
+  </header>
+
+  <main class="dashboard">
+    <!-- Hero Section -->
+    <section class="hero-card" id="heroCard">
+      <div class="hero-left">
+        <div class="hero-city" id="cityName">Nagpur</div>
+        <div class="hero-weather">
+          <div class="hero-icon" id="weatherIcon">🌤️</div>
+          <div class="hero-temp-block">
+            <div class="hero-temp" id="temperature">32°</div>
+            <div class="hero-minmax">
+              <span id="tempMax">35°</span> / <span id="tempMin">28°</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-meta">
+          <p id="feelsLike">Feels Like 35°</p>
+          <p id="weatherDescription">Clear Sky</p>
+        </div>
+      </div>
+      <div class="hero-right">
+        <div class="hero-day-selector">
+          <button class="day-btn active">Today</button>
+          <button class="day-btn">Tomorrow</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Map -->
+    <section class="card map-card">
+      <div class="card-header">
+        <h3>Select City on Map</h3>
+      </div>
+      <div id="cityMap" class="map-container"></div>
+    </section>
+
+    <!-- Hourly Forecast -->
+    <section class="card hourly-card">
+      <div class="card-header">
+        <h3>Hourly Forecast</h3>
+      </div>
+      <div class="hourly-scroll">
+        <div id="hourlyForecast" class="hourly-grid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Conditions Grid -->
+    <section class="card conditions-card">
+      <div class="card-header">
+        <h3>Conditions</h3>
+      </div>
+      <div class="conditions-grid">
+        <div class="condition-item">
+          <div class="condition-label">
+            <span class="condition-icon">💧</span>
+            <span>Humidity</span>
+          </div>
+          <div class="condition-value" id="humidityValue">65%</div>
+          <div class="condition-status">Very humid</div>
+        </div>
+        <div class="condition-item">
+          <div class="condition-label">
+            <span class="condition-icon">💨</span>
+            <span>Air Quality</span>
+          </div>
+          <div class="condition-value" id="aqiValue">45</div>
+          <div class="condition-status" id="aqiStatus">Good</div>
+        </div>
+        <div class="condition-item">
+          <div class="condition-label">
+            <span class="condition-icon">☀️</span>
+            <span>Peak UV</span>
+          </div>
+          <div class="condition-value" id="uvValue">4</div>
+          <div class="condition-status" id="uvLevel">Moderate</div>
+        </div>
+        <div class="condition-item">
+          <div class="condition-label">
+            <span class="condition-icon">🌙</span>
+            <span>Moon</span>
+          </div>
+          <div class="condition-value" id="moonPhase">Waning gibbous</div>
+          <div class="condition-status">&nbsp;</div>
+        </div>
+        <div class="condition-item">
+          <div class="condition-label">
+            <span class="condition-icon">👁️</span>
+            <span>Visibility</span>
+          </div>
+          <div class="condition-value" id="visibilityValue">8 km</div>
+          <div class="condition-status">Good</div>
+        </div>
+        <div class="condition-item">
+          <div class="condition-label">
+            <span class="condition-icon">⬇️</span>
+            <span>Pressure</span>
+          </div>
+          <div class="condition-value" id="pressureValue">1008 mb</div>
+          <div class="condition-status">Rising</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Precipitation Chart -->
+    <section class="card precipitation-card">
+      <div class="card-header">
+        <h3>Precipitation</h3>
+      </div>
+      <div class="chart-container">
+        <canvas id="precipitationChart" width="400" height="200"></canvas>
+      </div>
+    </section>
+
+    <!-- Wind Chart -->
+    <section class="card wind-card">
+      <div class="card-header">
+        <h3>Wind</h3>
+      </div>
+      <div class="chart-container">
+        <canvas id="windChart" width="400" height="200"></canvas>
+      </div>
+    </section>
+
+    <!-- Loading & Error States -->
+    <section class="loading" id="loadingState" hidden>
+      <p>Loading... ⏳</p>
+    </section>
+
+    <section class="message" id="errorState" hidden>
+      <p>City Not Found</p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Weather Intelligence Dashboard</p>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+
+
+
+
+
+
+
+  <!-- Registration Modal -->
+  <div id="registerModal" class="modal" aria-hidden="true" hidden>
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="registerTitle">
+      <button class="modal-close" id="modalClose" aria-label="Close registration form">×</button>
+      <h2 id="registerTitle">Create an account</h2>
+      <form id="registrationForm" onsubmit="(function(e){e.preventDefault();const name=document.getElementById('regName').value.trim();const email=document.getElementById('regEmail').value.trim().toLowerCase();const password=document.getElementById('regPassword').value;const confirm=document.getElementById('regConfirm').value;const city=document.getElementById('regCity').value||'';const msg=document.getElementById('registerMessage');if(!name||!email||!password){if(msg){msg.textContent='Please fill required fields.';msg.classList.add('error');}return false;}if(password.length<6){if(msg){msg.textContent='Password must be at least 6 characters.';msg.classList.add('error');}return false;}if(password!==confirm){if(msg){msg.textContent='Passwords do not match.';msg.classList.add('error');}return false;}const key='weather_users';const stored=localStorage.getItem(key);let users=stored?JSON.parse(stored):[];if(users.find(u=>u.email===email)){if(msg){msg.textContent='An account with this email already exists.';msg.classList.add('error');}return false;}users.push({id:Date.now(),name,email,password,city,createdAt:new Date().toISOString()});localStorage.setItem(key,JSON.stringify(users));if(msg){msg.textContent='Registration successful! You can now search weather.';msg.classList.remove('error');msg.classList.add('success');}setTimeout(()=>{const m=document.getElementById('registerModal');if(m){m.hidden=true;m.setAttribute('aria-hidden','true');}const form=document.getElementById('registrationForm');if(form)form.reset();if(msg){msg.textContent='';msg.className='form-message';}},1000);return false;})(event)">
+        <div class="form-row">
+          <label for="regName">Full name</label>
+          <input type="text" id="regName" name="name" required />
+        </div>
+        <div class="form-row">
+          <label for="regEmail">Email</label>
+          <input type="email" id="regEmail" name="email" required />
+        </div>
+        <div class="form-row">
+          <label for="regPassword">Password</label>
+          <input type="password" id="regPassword" name="password" minlength="6" required />
+        </div>
+        <div class="form-row">
+          <label for="regConfirm">Confirm Password</label>
+          <input type="password" id="regConfirm" name="confirm" minlength="6" required />
+        </div>
+        <div class="form-row">
+          <label for="regCity">City</label>
+          <select id="regCity" name="city">
+            <option value="">Select a city</option>
+            <option value="Nagpur">Nagpur</option>
+            <option value="Mumbai">Mumbai</option>
+            <option value="New Delhi">New Delhi</option>
+            <option value="Bengaluru">Bengaluru</option>
+            <option value="Chennai">Chennai</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="auth-btn">Register</button>
+          <button type="button" class="auth-btn" id="registerCancel">Cancel</button>
+        </div>
+        <div class="form-message" id="registerMessage" aria-live="polite"></div>
+      </form>
+    </div>
+  </div>
+  <script src="script.js"></script>
+  <script>
+    // Ensure a global handler is available for inline onsubmit and automation
+    window.handleRegistration = function(e){
+      try{
+        e && e.preventDefault && e.preventDefault();
+        const name = (document.getElementById('regName')||{}).value || '';
+        const email = ((document.getElementById('regEmail')||{}).value||'').trim().toLowerCase();
+        const password = (document.getElementById('regPassword')||{}).value || '';
+        const confirm = (document.getElementById('regConfirm')||{}).value || '';
+        const city = (document.getElementById('regCity')||{}).value || '';
+        const msg = document.getElementById('registerMessage');
+        if(!name||!email||!password){ if(msg){ msg.textContent='Please fill required fields.'; msg.classList.add('error'); } return false; }
+        if(password.length<6){ if(msg){ msg.textContent='Password must be at least 6 characters.'; msg.classList.add('error'); } return false; }
+        if(password!==confirm){ if(msg){ msg.textContent='Passwords do not match.'; msg.classList.add('error'); } return false; }
+        const key='weather_users'; const stored=localStorage.getItem(key); let users=stored?JSON.parse(stored):[];
+        if(users.find(u=>u.email===email)){ if(msg){ msg.textContent='An account with this email already exists.'; msg.classList.add('error'); } return false; }
+        users.push({ id: Date.now(), name, email, password, city, createdAt: new Date().toISOString() });
+        localStorage.setItem(key, JSON.stringify(users));
+        if(msg){ msg.textContent='Registration successful!'; msg.classList.remove('error'); msg.classList.add('success'); }
+        setTimeout(()=>{ const m=document.getElementById('registerModal'); if(m){ m.hidden=true; m.setAttribute('aria-hidden','true'); } const form=document.getElementById('registrationForm'); if(form) form.reset(); if(msg){ msg.textContent=''; msg.className='form-message'; } }, 800);
+        return false;
+      }catch(err){ console.error('reg error', err); return false; }
+    };
+    const regForm = document.getElementById('registrationForm');
+    if(regForm){ regForm.addEventListener('submit', function(e){ e.preventDefault(); return window.handleRegistration(e); }); }
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
